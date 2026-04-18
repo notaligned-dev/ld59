@@ -1,4 +1,5 @@
 using UnityEngine;
+using VContainer;
 
 public class PlayerController : MonoBehaviour
 {
@@ -14,16 +15,19 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float _gravity = 9.81f;
     [Header("Dependencies")]
     [SerializeField] private PlayerInputReader _inputReader;
-    [SerializeField] private Camera _camera;
     [SerializeField] private CharacterController _characterController;
+    [SerializeField] private PlayerLook _look;
 
+    private Camera _camera;
     private Vector3Int _inputMove;
     private Vector3 _velocity;
     private Vector2 _cameraRotation;
     private bool _isSprinting;
 
-    private void Awake()
+    [Inject]
+    private void Construct(Camera camera)
     {
+        _camera = camera;
         _isSprinting = false;
         _velocity = Vector3.zero;
         _cameraRotation = new Vector2(_camera.transform.rotation.y, _camera.transform.rotation.x);
@@ -34,22 +38,28 @@ public class PlayerController : MonoBehaviour
         UtilitiesDD.RequireNotNull(
             (_inputReader, nameof(_inputReader)),
             (_characterController, nameof(_characterController)),
-            (_camera, nameof(_camera))
+            (_look, nameof(_look))
         );
     }
 
     private void OnEnable()
     {
         _inputReader.MovePressed += HandleMove;
-        _inputReader.Looked += HandleLook;
+        _inputReader.Looked += HandleInputLook;
         _inputReader.Sprinted += HandleSprint;
+        _inputReader.Interacted += HandleInteraction;
+        _inputReader.Holded += HandleHoldStart;
+        _look.InteractableInViewChanged += HandleLookChanged;
     }
 
     private void OnDisable()
     {
         _inputReader.MovePressed -= HandleMove;
-        _inputReader.Looked -= HandleLook;
+        _inputReader.Looked -= HandleInputLook;
         _inputReader.Sprinted -= HandleSprint;
+        _inputReader.Interacted -= HandleInteraction;
+        _inputReader.Holded -= HandleHoldStart;
+        _look.InteractableInViewChanged -= HandleLookChanged;
     }
 
     private void FixedUpdate()
@@ -73,7 +83,7 @@ public class PlayerController : MonoBehaviour
             _inputMove.z = move.y > 0 ? 1 : -1;
     }
 
-    private void HandleLook(Vector2 look)
+    private void HandleInputLook(Vector2 look)
     {
         _cameraRotation.x -= look.y * sensitivity;
         _cameraRotation.y += look.x * sensitivity;
@@ -86,6 +96,22 @@ public class PlayerController : MonoBehaviour
     private void HandleSprint()
     {
         _isSprinting = true;
+    }
+
+    private void HandleLookChanged(IInteractable interactable)
+    {
+        interactable.TriggerLookAction();
+    }
+
+
+    private void HandleInteraction()
+    {
+        _look.CurrentInteractable?.TriggerInteraction();
+    }
+
+    private void HandleHoldStart()
+    {
+        Debug.Log("HOOLD!");
     }
 
     private void CalculateHorizontalVelocity()

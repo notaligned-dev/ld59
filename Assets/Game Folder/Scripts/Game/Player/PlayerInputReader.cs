@@ -1,5 +1,7 @@
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Interactions;
 
 public class PlayerInputReader : MonoBehaviour
 {
@@ -8,11 +10,23 @@ public class PlayerInputReader : MonoBehaviour
     public event Action<Vector2> MovePressed;
     public event Action<Vector2> Looked;
     public event Action Sprinted;
+    public event Action Interacted;
+    public event Action Holded;
 
     private void Awake()
     {
         _actions = new PlayerInputActions();
         _actions.Enable();
+    }
+
+    private void OnEnable()
+    {
+        _actions.Player.Interact.performed += HandleInteracted;
+    }
+
+    private void OnDisable()
+    {
+        _actions.Player.Interact.performed -= HandleInteracted;
     }
 
     private void Update()
@@ -32,5 +46,13 @@ public class PlayerInputReader : MonoBehaviour
 
         if (sprint.IsPressed())
             Sprinted?.Invoke();
+    }
+
+    private void HandleInteracted(InputAction.CallbackContext context)
+    {
+        if (context.interaction is TapInteraction)
+            Interacted?.Invoke();
+        else if (context.interaction is HoldInteraction)
+            Holded?.Invoke();
     }
 }
