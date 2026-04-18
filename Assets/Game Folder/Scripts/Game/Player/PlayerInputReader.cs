@@ -7,6 +7,7 @@ public class PlayerInputReader : MonoBehaviour
 
     public event Action<Vector2> MovePressed;
     public event Action<Vector2> Looked;
+    public event Action Sprinted;
 
     private void Awake()
     {
@@ -21,11 +22,15 @@ public class PlayerInputReader : MonoBehaviour
 
         var move = _actions.Player.Move;
         var look = _actions.Player.Look;
+        var sprint = _actions.Player.Sprint;
 
         if (move.IsPressed())
             MovePressed.Invoke(move.ReadValue<Vector2>());
 
         if (look.WasPressedThisFrame())
             Looked?.Invoke(look.ReadValue<Vector2>());
+
+        if (sprint.IsPressed())
+            Sprinted?.Invoke();
     }
 }

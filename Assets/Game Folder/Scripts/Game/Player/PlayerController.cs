@@ -10,7 +10,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private float _speed = 4.0f;
-    //[SerializeField] private float _runningSpeedModifier = 2f;
+    [SerializeField] private float _sprintSpeedModifier = 2f;
     [SerializeField] private float _gravity = 9.81f;
     [Header("Dependencies")]
     [SerializeField] private PlayerInputReader _inputReader;
@@ -20,11 +20,11 @@ public class PlayerController : MonoBehaviour
     private Vector3Int _inputMove;
     private Vector3 _velocity;
     private Vector2 _cameraRotation;
-    //private bool _isRunning;
+    private bool _isSprinting;
 
     private void Awake()
     {
-        //_isRunning = false;
+        _isSprinting = false;
         _velocity = Vector3.zero;
         _cameraRotation = new Vector2(_camera.transform.rotation.y, _camera.transform.rotation.x);
     }
@@ -42,12 +42,14 @@ public class PlayerController : MonoBehaviour
     {
         _inputReader.MovePressed += HandleMove;
         _inputReader.Looked += HandleLook;
+        _inputReader.Sprinted += HandleSprint;
     }
 
     private void OnDisable()
     {
         _inputReader.MovePressed -= HandleMove;
-        _inputReader.Looked += HandleLook;
+        _inputReader.Looked -= HandleLook;
+        _inputReader.Sprinted -= HandleSprint;
     }
 
     private void FixedUpdate()
@@ -81,23 +83,29 @@ public class PlayerController : MonoBehaviour
         _camera.transform.localRotation = Quaternion.Euler(_cameraRotation.x, _cameraRotation.y, 0f);
     }
 
+    private void HandleSprint()
+    {
+        _isSprinting = true;
+    }
+
     private void CalculateHorizontalVelocity()
     {
-        if (Mathf.Abs(_inputMove.x) == 1 && Mathf.Abs(_inputMove.z) == 1)
-        {
-            _velocity.x = Mathf.Sqrt(_speed) * _inputMove.x;
-            _velocity.z = Mathf.Sqrt(_speed) * _inputMove.z;
-            return;
-        }
+        var currentSpeed = _speed;
 
-        _velocity.x = _speed * _inputMove.x;
-        _velocity.z = _speed * _inputMove.z;
+        if (Mathf.Abs(_inputMove.x) == 1 && Mathf.Abs(_inputMove.z) == 1)
+            currentSpeed = Mathf.Sqrt(currentSpeed);
+
+        if (_isSprinting)
+            currentSpeed *= _sprintSpeedModifier;
+
+        _velocity.x = currentSpeed * _inputMove.x;
+        _velocity.z = currentSpeed * _inputMove.z;
     }
 
     private void ResetInput()
     {
         _inputMove.x = 0;
         _inputMove.z = 0;
-        //_isRunning = false;
+        _isSprinting = false;
     }
 }
