@@ -39,7 +39,7 @@ public class PlayerInputReader : MonoBehaviour
         var sprint = _actions.Player.Sprint;
 
         if (move.IsPressed())
-            MovePressed.Invoke(move.ReadValue<Vector2>());
+            MovePressed?.Invoke(move.ReadValue<Vector2>());
 
         if (look.WasPressedThisFrame())
             Looked?.Invoke(look.ReadValue<Vector2>());

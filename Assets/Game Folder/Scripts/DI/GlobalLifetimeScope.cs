@@ -9,6 +9,8 @@ public class GlobalLifetimeScope : LifetimeScope
     protected override void Configure(IContainerBuilder builder)
     {
         builder.Register<PlayerSaveSystem>(Lifetime.Singleton);
+        builder.Register<StoryProgress>(Lifetime.Singleton);
+        builder.Register<StoryService>(Lifetime.Scoped).AsSelf();
 
         if (_isMock == false)
         {
