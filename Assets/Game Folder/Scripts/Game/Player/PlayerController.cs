@@ -34,7 +34,7 @@ public class PlayerController : MonoBehaviour
         UtilitiesDD.RequireNotNull(
             (_inputReader, nameof(_inputReader)),
             (_characterController, nameof(_characterController)),
-            (_inputMove, nameof(_inputMove))
+            (_camera, nameof(_camera))
         );
     }
 
