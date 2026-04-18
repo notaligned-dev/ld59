@@ -6,10 +6,11 @@ public class PlayerController : MonoBehaviour
     private const float MaximumGravityStackedValue = 20f;
     private const float GroundedVelocityY = -2f;
     private const float MaxAngleRangeAbsoluteByX = 86;
-    private const float sensitivity = 1.0f;
+    private const float sensitivity = 0.8f;
 
     [Header("Settings")]
-    [SerializeField] private float _speed = 1.0f;
+    [SerializeField] private float _speed = 4.0f;
+    //[SerializeField] private float _runningSpeedModifier = 2f;
     [SerializeField] private float _gravity = 9.81f;
     [Header("Dependencies")]
     [SerializeField] private PlayerInputReader _inputReader;
@@ -19,9 +20,11 @@ public class PlayerController : MonoBehaviour
     private Vector3Int _inputMove;
     private Vector3 _velocity;
     private Vector2 _cameraRotation;
+    //private bool _isRunning;
 
     private void Awake()
     {
+        //_isRunning = false;
         _velocity = Vector3.zero;
         _cameraRotation = new Vector2(_camera.transform.rotation.y, _camera.transform.rotation.x);
     }
@@ -56,7 +59,7 @@ public class PlayerController : MonoBehaviour
 
         CalculateHorizontalVelocity();
         _characterController.Move(Quaternion.AngleAxis(_cameraRotation.y, Vector3.up) * _velocity * Time.fixedDeltaTime);
-        ResetInputMove();
+        ResetInput();
     }
 
     private void HandleMove(Vector2 move)
@@ -70,10 +73,10 @@ public class PlayerController : MonoBehaviour
 
     private void HandleLook(Vector2 look)
     {
-        _cameraRotation.x -= look.y;
-        _cameraRotation.y += look.x;
+        _cameraRotation.x -= look.y * sensitivity;
+        _cameraRotation.y += look.x * sensitivity;
 
-        Mathf.Clamp(_cameraRotation.x, -1 * MaxAngleRangeAbsoluteByX, MaxAngleRangeAbsoluteByX);
+        _cameraRotation.x = Mathf.Clamp(_cameraRotation.x, -1 * MaxAngleRangeAbsoluteByX, MaxAngleRangeAbsoluteByX);
 
         _camera.transform.localRotation = Quaternion.Euler(_cameraRotation.x, _cameraRotation.y, 0f);
     }
@@ -91,9 +94,10 @@ public class PlayerController : MonoBehaviour
         _velocity.z = _speed * _inputMove.z;
     }
 
-    private void ResetInputMove()
+    private void ResetInput()
     {
         _inputMove.x = 0;
         _inputMove.z = 0;
+        //_isRunning = false;
     }
 }

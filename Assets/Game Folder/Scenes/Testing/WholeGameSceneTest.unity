@@ -689,7 +689,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8965999a9e02b0543a0fdf1bac047292, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  _speed: 3
+  _speed: 4
   _gravity: 9.81
   _inputReader: {fileID: 978459703}
   _camera: {fileID: 1262151994}
