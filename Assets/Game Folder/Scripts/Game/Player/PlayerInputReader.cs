@@ -11,6 +11,7 @@ public class PlayerInputReader : MonoBehaviour
     public event Action<Vector2> Looked;
     public event Action Sprinted;
     public event Action Interacted;
+    public event Action BookWatching;
     public event Action Holded;
 
     private void Awake()
@@ -34,9 +35,12 @@ public class PlayerInputReader : MonoBehaviour
         if (_actions == null)
             return;
 
-        var move = _actions.Player.Move;
-        var look = _actions.Player.Look;
-        var sprint = _actions.Player.Sprint;
+        var playerActions = _actions.Player;
+
+        var move = playerActions.Move;
+        var look = playerActions.Look;
+        var sprint = playerActions.Sprint;
+        var watchBook = playerActions.WatchBook;
 
         if (move.IsPressed())
             MovePressed?.Invoke(move.ReadValue<Vector2>());
@@ -46,6 +50,9 @@ public class PlayerInputReader : MonoBehaviour
 
         if (sprint.IsPressed())
             Sprinted?.Invoke();
+
+        if (watchBook.IsPressed())
+            BookWatching?.Invoke();
     }
 
     private void HandleInteracted(InputAction.CallbackContext context)

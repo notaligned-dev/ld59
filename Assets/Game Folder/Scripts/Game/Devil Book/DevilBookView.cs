@@ -4,7 +4,10 @@ using UnityEngine;
 
 public class DevilBookView : MonoBehaviour
 {
-    [SerializeField] private float _timeToRaise = 0.4f;
+    private const float HighestBookPositionY = 0.3f;
+    private const float DefaultBookPosition = 0f;
+
+    [SerializeField] private float _timeToRaiseInitally = 0.4f;
     [SerializeField] private Transform _book;
     [SerializeField] private TMP_Text _symbol;
 
@@ -32,27 +35,6 @@ public class DevilBookView : MonoBehaviour
             StartCoroutine(RaiseBook());
     }
 
-    private IEnumerator RaiseBook()
-    {
-        var await = new WaitForEndOfFrame();
-        Vector3 currentPosition = _book.localPosition;
-        float startPositionY = currentPosition.y;
-        float finalPositionY = 0f;
-        float startTime = Time.time;
-        float timePassed = 0f;
-
-        while (timePassed < _timeToRaise)
-        {
-            currentPosition.y = Mathf.Lerp(startPositionY, finalPositionY, timePassed / _timeToRaise);
-            _book.localPosition = currentPosition;
-            timePassed = Time.time - startTime;
-            yield return await;
-        }
-
-        _isInitialzied = true;
-        yield return null;
-    }
-
     public void ChangeSymbol(DevilSymbols symbol)
     {
         switch (symbol)
@@ -67,6 +49,46 @@ public class DevilBookView : MonoBehaviour
         }
     }
 
+    public void WatchBook()
+    {
+        if (_isInitialzied == false)
+            return;
+
+        var newPosition = _book.localPosition;
+        newPosition.y = Mathf.Clamp(newPosition.y + (HighestBookPositionY - DefaultBookPosition) / 10, DefaultBookPosition, HighestBookPositionY);
+        _book.localPosition = newPosition;
+    }
+
+    public void ReleaseBook()
+    {
+        if (_isInitialzied == false)
+            return;
+
+        var newPosition = _book.localPosition;
+        newPosition.y = Mathf.Clamp(newPosition.y - (HighestBookPositionY - DefaultBookPosition) / 10, DefaultBookPosition, HighestBookPositionY);
+        _book.localPosition = newPosition;
+    }
+
+    private IEnumerator RaiseBook()
+    {
+        var await = new WaitForEndOfFrame();
+        Vector3 currentPosition = _book.localPosition;
+        float startPositionY = currentPosition.y;
+        float finalPositionY = DefaultBookPosition;
+        float startTime = Time.time;
+        float timePassed = 0f;
+
+        while (timePassed < _timeToRaiseInitally)
+        {
+            currentPosition.y = Mathf.Lerp(startPositionY, finalPositionY, timePassed / _timeToRaiseInitally);
+            _book.localPosition = currentPosition;
+            timePassed = Time.time - startTime;
+            yield return await;
+        }
+
+        _isInitialzied = true;
+        yield return null;
+    }
 
     private void ClearSymbol()
     {

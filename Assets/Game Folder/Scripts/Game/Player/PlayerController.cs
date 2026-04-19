@@ -19,15 +19,19 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerLook _look;
 
     private Camera _camera;
+    private DevilBookView _bookView;
     private Vector3Int _inputMove;
     private Vector3 _velocity;
     private Vector2 _cameraRotation;
     private bool _isSprinting;
 
+    public bool IsWatchingBook { get; private set; }
+
     [Inject]
-    private void Construct(Camera camera)
+    private void Construct(Camera camera, DevilBookView bookView)
     {
         _camera = camera;
+        _bookView = bookView;
         _isSprinting = false;
         _velocity = Vector3.zero;
         _cameraRotation = new Vector2(_camera.transform.rotation.y, _camera.transform.rotation.x);
@@ -49,6 +53,7 @@ public class PlayerController : MonoBehaviour
         _inputReader.Sprinted += HandleSprint;
         _inputReader.Interacted += HandleInteraction;
         _inputReader.Holded += HandleHoldStart;
+        _inputReader.BookWatching += HandleBookWatching;
         _look.InteractableInViewChanged += HandleLookChanged;
     }
 
@@ -59,6 +64,7 @@ public class PlayerController : MonoBehaviour
         _inputReader.Sprinted -= HandleSprint;
         _inputReader.Interacted -= HandleInteraction;
         _inputReader.Holded -= HandleHoldStart;
+        _inputReader.BookWatching -= HandleBookWatching;
         _look.InteractableInViewChanged -= HandleLookChanged;
     }
 
@@ -69,6 +75,7 @@ public class PlayerController : MonoBehaviour
         else
             _velocity.y = -1 * Mathf.Min(_velocity.y + _gravity, MaximumGravityStackedValue);
 
+        ExecuteBookWatching();
         CalculateHorizontalVelocity();
         _characterController.Move(Quaternion.AngleAxis(_cameraRotation.y, Vector3.up) * _velocity * Time.fixedDeltaTime);
         ResetInput();
@@ -98,6 +105,11 @@ public class PlayerController : MonoBehaviour
         _isSprinting = true;
     }
 
+    private void HandleBookWatching()
+    {
+        IsWatchingBook = true;
+    }
+
     private void HandleLookChanged(IInteractable interactable)
     {
         interactable.TriggerLookAction();
@@ -111,6 +123,14 @@ public class PlayerController : MonoBehaviour
     private void HandleHoldStart()
     {
         Debug.Log("HOOLD!");
+    }
+
+    private void ExecuteBookWatching()
+    {
+        if (IsWatchingBook)
+            _bookView.WatchBook();
+        else
+            _bookView.ReleaseBook();
     }
 
     private void CalculateHorizontalVelocity()
@@ -132,5 +152,6 @@ public class PlayerController : MonoBehaviour
         _inputMove.x = 0;
         _inputMove.z = 0;
         _isSprinting = false;
+        IsWatchingBook = false;
     }
 }
