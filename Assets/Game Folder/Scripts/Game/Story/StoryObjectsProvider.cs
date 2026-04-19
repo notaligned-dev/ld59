@@ -163,13 +163,11 @@ public class StoryObjectsProvider : MonoBehaviour
 
         private void HandleEntered(TriggerArea area)
         {
-            Debug.Log($"Entered successfuly? {IsLocked == false} && {_triggerZonesStatus.ContainsKey(area)}");
-
             if (IsLocked == false)
                 if (_triggerZonesStatus.ContainsKey(area))
                     _triggerZonesStatus[area] = true;
 
-            Debug.Log($"{IsEverythingDone()}");
+            IsEverythingDone();
         }
 
         private bool IsEverythingDone()
