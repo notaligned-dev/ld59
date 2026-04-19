@@ -80,5 +80,7 @@ public enum DevilSymbols
     None = 0,
     DirectionEye = 1,
     StopHand = 2,
-    Ear = 3
+    Ear = 3,
+    Steps = 4,
+    TakeHand = 5
 }

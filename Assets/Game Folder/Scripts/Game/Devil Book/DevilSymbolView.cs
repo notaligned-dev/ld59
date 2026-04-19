@@ -1,3 +1,4 @@
+using Mono.Cecil;
 using System;
 using System.Collections;
 using UnityEngine;
@@ -9,21 +10,25 @@ public class DevilSymbolView : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float _animationDuration = 0.25f;
     [SerializeField] private float _animationSwitchDelay = 0.1f;
-    [SerializeField] private float _maxHearingDistance = 12.5f;
+    [SerializeField] private float _maxDestinationDistance = 30f;
     [Header("References")]
     [SerializeField] private DecalProjector _symbolBaseProjector;
     [SerializeField] private DecalProjector _symbolEditableProjector;
+    [SerializeField] private DecalProjector _symbolEditableProjector2;
     [Header("Materials")]
     [SerializeField] private Material _emptyMaterial;
     [SerializeField] private Material _devilEyeBase;
     [SerializeField] private Material _devilEyePupil;
     [SerializeField] private Material _stopHandBase;
     [SerializeField] private Material _earEditable;
+    [SerializeField] private Material _leftStepEditable;
+    [SerializeField] private Material _rightStepEditable;
+    [SerializeField] private Material _takeHandEditable;
 
     private Camera _playerCamera;
     private Coroutine _animation;
     private Coroutine _eyeWatching;
-    private Coroutine _earHearing;
+    private Coroutine _stepsTracking;
     private DevilSymbols _currentSymbol;
     private Vector3 _initialEditableProjectorPosition;
     private Vector2 _initialEditableProjectorSize;
@@ -41,18 +46,22 @@ public class DevilSymbolView : MonoBehaviour
         UtilitiesDD.RequireNotNull(
             (_symbolBaseProjector, nameof(_symbolBaseProjector)),
             (_symbolEditableProjector, nameof(_symbolEditableProjector)),
+            (_symbolEditableProjector2, nameof(_symbolEditableProjector2)),
             (_emptyMaterial, nameof(_emptyMaterial)),
             (_devilEyeBase, nameof(_devilEyeBase)),
             (_devilEyePupil, nameof(_devilEyePupil)),
             (_stopHandBase, nameof(_stopHandBase)),
-            (_earEditable, nameof(_earEditable))
+            (_earEditable, nameof(_earEditable)),
+            (_leftStepEditable, nameof(_leftStepEditable)),
+            (_rightStepEditable, nameof(_rightStepEditable)),
+            (_takeHandEditable, nameof(_takeHandEditable))
         );
     }
 
     private void Awake()
     {
         _eyeWatching = null;
-        _earHearing = null;
+        _stepsTracking = null;
         _initialEditableProjectorPosition = _symbolEditableProjector.transform.localPosition;
         _symbolBaseProjector.fadeFactor = 0f;
         _symbolEditableProjector.fadeFactor = 0f;
@@ -67,6 +76,8 @@ public class DevilSymbolView : MonoBehaviour
     {
         if (_animation != null)
             return false;
+
+        StopAllDevilTracking();
 
         if (_currentSymbol == DevilSymbols.DirectionEye)
         {
@@ -86,51 +97,90 @@ public class DevilSymbolView : MonoBehaviour
         if (_animation != null)
             return false;
 
-        _currentSymbol = DevilSymbols.StopHand;
+        StopAllDevilTracking();
 
         if (_currentSymbol != DevilSymbols.StopHand)
             _animation = StartCoroutine(ChangeShowingSymbol(DevilSymbols.StopHand, onShowed2: onComplete));
+        else
+            onComplete?.Invoke();
+
+        _currentSymbol = DevilSymbols.StopHand;
         
         return true;
     }
 
-    public bool TryShowEar(Transform earDestination = null, Action onComplete = null)
+    public bool TryShowHandToTake(Action onComplete = null)
     {
         if (_animation != null)
             return false;
 
-        if (_currentSymbol == DevilSymbols.Ear)
+        StopAllDevilTracking();
+
+        if (_currentSymbol != DevilSymbols.TakeHand)
+            _animation = StartCoroutine(ChangeShowingSymbol(DevilSymbols.TakeHand, onShowed2: onComplete));
+        else
+            onComplete?.Invoke();
+
+        _currentSymbol = DevilSymbols.TakeHand;
+
+        return true;
+    }
+
+    public bool TryShowEar(Action onComplete = null)
+    {
+        if (_animation != null)
+            return false;
+
+        StopAllDevilTracking();
+
+        if (_currentSymbol != DevilSymbols.Ear)
+            _animation = StartCoroutine(ChangeShowingSymbol(DevilSymbols.Ear, onShowed2: onComplete));
+        else
+            onComplete?.Invoke();
+
+        _currentSymbol = DevilSymbols.Ear;
+
+        return true;
+    }
+
+    public bool TryShowSteps(Transform stepsDestination = null, Action onComplete = null)
+    {
+        if (_animation != null)
+            return false;
+
+        StopAllDevilTracking();
+
+        if (_currentSymbol == DevilSymbols.Steps)
         {
-            SetEarTarget(earDestination);
+            SetStepsTarget(stepsDestination);
         }
         else
         {
-            _currentSymbol = DevilSymbols.Ear;
-            _animation = StartCoroutine(ChangeShowingSymbol(DevilSymbols.Ear, onShowed: () => SetEarTarget(earDestination), onShowed2: onComplete));
+            _currentSymbol = DevilSymbols.Steps;
+            _animation = StartCoroutine(ChangeShowingSymbol(DevilSymbols.Steps, onShowed: () => SetStepsTarget(stepsDestination), onShowed2: onComplete));
         }
 
         return true;
     }
 
-    private void SetEarTarget(Transform earDestination = null)
+    private void SetStepsTarget(Transform earDestination = null)
     {
-        StopAllDevilTracking();
-
         if (earDestination != null)
-            _earHearing = StartCoroutine(HearDestination(earDestination));
+            _stepsTracking = StartCoroutine(TrackStepsDestination(earDestination));
     }
 
     private void SetEyeTarget(Transform eyeDirectionToWatch = null)
     {
-        StopAllDevilTracking();
-
         if (eyeDirectionToWatch != null)
-            _eyeWatching = StartCoroutine(TrackDestination(eyeDirectionToWatch));
+            _eyeWatching = StartCoroutine(TrackEyeDestination(eyeDirectionToWatch));
+        else
+            _symbolEditableProjector.transform.localPosition = _initialEditableProjectorPosition;
     }
 
-    private IEnumerator TrackDestination(Transform destination)
+    private IEnumerator TrackEyeDestination(Transform destination)
     {
         var await = new WaitForEndOfFrame();
+        _symbolEditableProjector.transform.localPosition = _initialEditableProjectorPosition;
         var initialPosition = _initialEditableProjectorPosition;
 
         while (destination != null)
@@ -154,25 +204,46 @@ public class DevilSymbolView : MonoBehaviour
         yield return null;
     }
 
-    private IEnumerator HearDestination(Transform destination)
+    private IEnumerator TrackStepsDestination(Transform destination)
     {
         var await = new WaitForEndOfFrame();
-        var initialSize = _initialEditableProjectorSize;
+        var initialSizeEditable1 = _initialEditableProjectorSize;
+        var initialSizeEditable2 = _initialEditableProjectorSize;
+        float currentFormulaX = 0;
+        int initialFormulaXChange = 1;
+        float speedCoefficient = 3.0f;
+        float minSpeedCoefficient = 3.0f;
+        float maxSpeedCoefficient = 10.0f;
+        float formulaShrinkCoefficient = 0.25f;
+        int formulaShift = 1;
 
         while (destination != null)
         {
-            float distance = Vector3.Distance(transform.position, destination.position);
+            var distance = Vector3.Distance(destination.position, transform.position);
 
-            initialSize.x = Mathf.Lerp(_maxEditableProjectorSize.x, _minEditableProjectorSize.x, distance / _maxHearingDistance);
-            initialSize.y = Mathf.Lerp(_maxEditableProjectorSize.y, _minEditableProjectorSize.y, distance / _maxHearingDistance);
+            speedCoefficient = Mathf.Lerp(minSpeedCoefficient, maxSpeedCoefficient, distance / _maxDestinationDistance);
 
-            _symbolEditableProjector.size = new Vector3(initialSize.x, initialSize.y, _symbolEditableProjector.size.z);
+            var sizeCoefficient1 = (Mathf.Sin(currentFormulaX * Mathf.Deg2Rad) * formulaShrinkCoefficient + formulaShift);
+
+            initialSizeEditable1.x = _initialEditableProjectorSize.x * sizeCoefficient1;
+            initialSizeEditable1.y = _initialEditableProjectorSize.y * sizeCoefficient1;
+
+            var sizeCoefficient2 = (Mathf.Cos(currentFormulaX * Mathf.Deg2Rad) * formulaShrinkCoefficient + formulaShift);
+
+            initialSizeEditable2.x = _initialEditableProjectorSize.x * sizeCoefficient2;
+            initialSizeEditable2.y = _initialEditableProjectorSize.y * sizeCoefficient2;
+
+            _symbolEditableProjector.size = new Vector3(initialSizeEditable1.x, initialSizeEditable1.y, _symbolEditableProjector.size.z);
+            _symbolEditableProjector2.size = new Vector3(initialSizeEditable2.x, initialSizeEditable2.y, _symbolEditableProjector.size.z);
+
+            currentFormulaX += initialFormulaXChange * Mathf.Clamp(speedCoefficient, minSpeedCoefficient, maxSpeedCoefficient);
 
             yield return await;
         }
 
         _symbolEditableProjector.size = new Vector3(_initialEditableProjectorSize.x, _initialEditableProjectorSize.y, _symbolEditableProjector.size.z);
-        _earHearing = null;
+        _symbolEditableProjector2.size = new Vector3(_initialEditableProjectorSize.x, _initialEditableProjectorSize.y, _symbolEditableProjector.size.z);
+        _stepsTracking = null;
         yield return null;
     }
 
@@ -228,20 +299,37 @@ public class DevilSymbolView : MonoBehaviour
             case DevilSymbols.DirectionEye:
                 _symbolBaseProjector.material = _devilEyeBase;
                 _symbolEditableProjector.material = _devilEyePupil;
+                _symbolEditableProjector2.material = _emptyMaterial;
                 break;
 
             case DevilSymbols.StopHand:
                 _symbolBaseProjector.material = _stopHandBase;
                 _symbolEditableProjector.material = _emptyMaterial;
+                _symbolEditableProjector2.material = _emptyMaterial;
                 break;
 
             case DevilSymbols.Ear:
                 _symbolBaseProjector.material = _emptyMaterial;
                 _symbolEditableProjector.material = _earEditable;
+                _symbolEditableProjector2.material = _emptyMaterial;
                 break;
+
+            case DevilSymbols.Steps:
+                _symbolBaseProjector.material = _emptyMaterial;
+                _symbolEditableProjector.material = _leftStepEditable;
+                _symbolEditableProjector2.material = _rightStepEditable;
+                break;
+
+            case DevilSymbols.TakeHand:
+                _symbolBaseProjector.material = _emptyMaterial;
+                _symbolEditableProjector.material = _takeHandEditable;
+                _symbolEditableProjector2.material = _emptyMaterial;
+                break;
+
             default:
                 _symbolBaseProjector.material = _emptyMaterial;
                 _symbolEditableProjector.material = _emptyMaterial;
+                _symbolEditableProjector2.material = _emptyMaterial;
                 break;
         }
     }
@@ -254,10 +342,10 @@ public class DevilSymbolView : MonoBehaviour
             _eyeWatching = null;
         }
 
-        if (_earHearing != null)
+        if (_stepsTracking != null)
         {
-            StopCoroutine(_earHearing);
-            _earHearing = null;
+            StopCoroutine(_stepsTracking);
+            _stepsTracking = null;
         }
     }
 }

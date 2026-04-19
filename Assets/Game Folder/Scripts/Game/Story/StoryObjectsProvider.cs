@@ -63,18 +63,20 @@ public class StoryObjectsProvider : MonoBehaviour
     {
         [SerializeField] private List<StoryProgressionObject> _objectsToLook;
         [SerializeField] private List<StoryProgressionObject> _objectsToInteract;
+        [SerializeField] private List<TriggerArea> _triggerZones;
         [SerializeField] private StoryPhase PhaseToProgress;
 
         [HideInInspector]
         public bool IsLocked;
         private Dictionary<IStoryInteractable, bool> _lookedStatus;
         private Dictionary<IStoryInteractable, bool> _interactedStatus;
+        private Dictionary<TriggerArea, bool> _triggerZonesStatus;
 
         public event Action<StoryPhase> GroupDone;
 
         public bool Validate()
         {
-            if (_objectsToLook == null || _objectsToInteract == null)
+            if (_objectsToLook == null || _objectsToInteract == null || _triggerZones == null)
                 return false;
 
             if (PhaseToProgress == StoryPhase.Beginning)
@@ -88,6 +90,7 @@ public class StoryObjectsProvider : MonoBehaviour
             IsLocked = true;
             _lookedStatus = new Dictionary<IStoryInteractable, bool>();
             _interactedStatus = new Dictionary<IStoryInteractable, bool>();
+            _triggerZonesStatus = new Dictionary<TriggerArea, bool>();
 
             foreach (var obj in _objectsToInteract)
             {
@@ -104,6 +107,14 @@ public class StoryObjectsProvider : MonoBehaviour
 
                 obj.Looked += HandleLooked;
             }
+
+            foreach (var obj in _triggerZones)
+            {
+                if (_triggerZonesStatus.ContainsKey(obj) == false)
+                    _triggerZonesStatus.Add(obj, false);
+
+                obj.PlayerEntered += HandleEntered;
+            }
         }
 
         public void Dispose()
@@ -114,8 +125,12 @@ public class StoryObjectsProvider : MonoBehaviour
             foreach (var obj in _objectsToLook)
                 obj.Looked -= HandleLooked;
 
+            foreach (var obj in _triggerZones)
+                obj.PlayerEntered -= HandleEntered;
+
             _lookedStatus.Clear();
             _interactedStatus.Clear();
+            _triggerZonesStatus.Clear();
         }
 
         private void HandleLooked(IInteractable interactable)
@@ -146,10 +161,21 @@ public class StoryObjectsProvider : MonoBehaviour
             IsEverythingDone();
         }
 
-        private void IsEverythingDone()
+        private void HandleEntered(TriggerArea area)
+        {
+            Debug.Log($"Entered successfuly? {IsLocked == false} && {_triggerZonesStatus.ContainsKey(area)}");
+
+            if (IsLocked == false)
+                if (_triggerZonesStatus.ContainsKey(area))
+                    _triggerZonesStatus[area] = true;
+
+            Debug.Log($"{IsEverythingDone()}");
+        }
+
+        private bool IsEverythingDone()
         {
             if (IsLocked)
-                return;
+                return false;
 
             bool isDone = true;
 
@@ -171,8 +197,19 @@ public class StoryObjectsProvider : MonoBehaviour
                 }
             }
 
+            foreach (var (obj, status) in _triggerZonesStatus)
+            {
+                if (status == false)
+                {
+                    isDone = false;
+                    break;
+                }
+            }
+
             if (isDone)
                 GroupDone?.Invoke(PhaseToProgress);
+
+            return isDone;
         }
     }
 }

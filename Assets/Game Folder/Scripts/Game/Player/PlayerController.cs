@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using UnityEngine;
 using VContainer;
 
@@ -18,7 +20,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private CharacterController _characterController;
     [SerializeField] private PlayerLook _look;
 
-    public bool IsWatchingBookFixed;
+    private byte _bookFixCoroutineCount;
+    private bool _isWatchingBookFixed;
     private Camera _camera;
     private DevilBookView _bookView;
     private Vector3Int _inputMove;
@@ -31,11 +34,18 @@ public class PlayerController : MonoBehaviour
     [Inject]
     private void Construct(Camera camera, DevilBookView bookView)
     {
+        _bookFixCoroutineCount = 0;
         _camera = camera;
         _bookView = bookView;
         _isSprinting = false;
         _velocity = Vector3.zero;
         _cameraRotation = new Vector2(_camera.transform.rotation.y, _camera.transform.rotation.x);
+    }
+
+    private void Awake()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void OnValidate()
@@ -80,6 +90,25 @@ public class PlayerController : MonoBehaviour
         CalculateHorizontalVelocity();
         _characterController.Move(Quaternion.AngleAxis(_cameraRotation.y, Vector3.up) * _velocity * Time.fixedDeltaTime);
         ResetInput();
+    }
+
+    public void FixBookForSeconds(float seconds)
+    {
+        _isWatchingBookFixed = true;
+
+        _bookFixCoroutineCount++;
+        StartCoroutine(UnlockBookInTime(seconds));
+    }
+
+    private IEnumerator UnlockBookInTime(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        _bookFixCoroutineCount--;
+
+        if (_bookFixCoroutineCount == 0)
+            _isWatchingBookFixed = false;
+
+        yield return null;
     }
 
     private void HandleMove(Vector2 move)
@@ -128,7 +157,7 @@ public class PlayerController : MonoBehaviour
 
     private void ExecuteBookWatching()
     {
-        if (IsWatchingBook || IsWatchingBookFixed)
+        if (IsWatchingBook || _isWatchingBookFixed)
             _bookView.WatchBook();
         else
             _bookView.ReleaseBook();

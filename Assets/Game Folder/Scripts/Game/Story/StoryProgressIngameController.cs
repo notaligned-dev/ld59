@@ -1,11 +1,18 @@
 using System;
-using System.Diagnostics;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
-public class StoryProgressIngameController : IInitializable, IDisposable
+public class StoryProgressIngameController : MonoBehaviour
 {
+    private const float BookFixTime = 2f;
+
+    [SerializeField] private Transform _zonePosition1;
+    [SerializeField] private Transform _zonePosition2;
+    [SerializeField] private Transform _zonePosition3;
+    [SerializeField] private StoryProgressionObject _devilEndingFinalObject;
+    [SerializeField] private StoryProgressionObject _shredder;
+
     private StoryObjectsProvider _objectsProvider;
     private StoryService _service;
     private DevilBookView _devilBookView;
@@ -13,7 +20,7 @@ public class StoryProgressIngameController : IInitializable, IDisposable
     private PlayerController _playerController;
 
     [Inject]
-    public StoryProgressIngameController(StoryObjectsProvider objectsProvider, StoryService storyService, DevilBookView devilBookView, DevilSymbolView devilSymbolView, PlayerController playerController)
+    private void Construct(StoryObjectsProvider objectsProvider, StoryService storyService, DevilBookView devilBookView, DevilSymbolView devilSymbolView, PlayerController playerController)
     {
         _objectsProvider = objectsProvider;
         _service = storyService;
@@ -22,24 +29,16 @@ public class StoryProgressIngameController : IInitializable, IDisposable
         _playerController = playerController;
     }
 
-    public void Initialize()
-    {
-        SubscribeToEvents();
-    }
-
-    public void Dispose()
-    {
-        UnsubscribeFromEvents();
-    }
-
-    private void SubscribeToEvents()    
+    private void OnEnable()
     {
         _objectsProvider.GroupFinished += HandleGroupFinished;
     }
 
-    private void UnsubscribeFromEvents()
+    private void OnDisable()
     {
         _objectsProvider.GroupFinished -= HandleGroupFinished;
+        _shredder.Interacted -= HandleGoodEnding;
+        _devilEndingFinalObject.Interacted -= HandleBadEnding;
     }
 
     private void HandleGroupFinished(StoryPhase nextPhase)
@@ -49,24 +48,57 @@ public class StoryProgressIngameController : IInitializable, IDisposable
             if (nextPhase == StoryPhase.DevilBookTaken)
             {
                 _devilBookView.Initialize();
-                _playerController.IsWatchingBookFixed = true;
-                GameObject myEmptyObj = new("hardcode goal 1");
-                myEmptyObj.transform.position = new Vector3(-4f, 2.55f, -2.1f);
-                _devilSymbolView.TryShowEye(myEmptyObj.transform, onComplete: UnfixBook);
+                _devilSymbolView.TryShowEye(_zonePosition1.transform);
+                _playerController.FixBookForSeconds(BookFixTime);
             }
             else if (nextPhase == StoryPhase.FirstDoorOpened)
             {
-                _playerController.IsWatchingBookFixed = true;
-                GameObject myEmptyObj = new("hardcode goal 2");
-                myEmptyObj.transform.position = new Vector3(0.5f, 1.7f, 16.5f);
-                //_devilSymbolView.TryShowHand(onComplete: UnlockBookWatch);
-                _devilSymbolView.TryShowEar(myEmptyObj.transform, onComplete: UnfixBook);
+                _devilSymbolView.TryShowEar();
+                _playerController.FixBookForSeconds(BookFixTime);
+            }
+            else if (nextPhase == StoryPhase.SecretBookshelfOpened)
+            {
+                _devilSymbolView.TryShowSteps(_zonePosition2.transform);
+                _playerController.FixBookForSeconds(BookFixTime);
+            }
+            else if (nextPhase == StoryPhase.AreaWithShredderEntered)
+            {
+                _devilSymbolView.TryShowEye(null);
+                _playerController.FixBookForSeconds(BookFixTime);
+            }
+            else if (nextPhase == StoryPhase.PenTaken)
+            {
+                _devilSymbolView.TryShowSteps(_zonePosition3.transform);
+                _playerController.FixBookForSeconds(BookFixTime);
+            }
+            else if (nextPhase == StoryPhase.ContractShown)
+            {
+                _devilSymbolView.TryShowHandToTake();
+                _playerController.FixBookForSeconds(BookFixTime);
+            }
+            else if (nextPhase == StoryPhase.ContractTaken)
+            {
+                StartFinalPhase();
             }
         }
     }
 
-    private void UnfixBook()
+    private void StartFinalPhase()
     {
-        _playerController.IsWatchingBookFixed = false;
+        _shredder.Interacted += HandleGoodEnding;
+        _devilEndingFinalObject.Interacted += HandleBadEnding;
+
+        _devilSymbolView.TryShowSteps(_devilEndingFinalObject.transform);
+        _playerController.FixBookForSeconds(BookFixTime);
+    }
+
+    private void HandleGoodEnding(IInteractable interactable)
+    {
+        Debug.Log("Good Ending!");
+    }
+
+    private void HandleBadEnding(IInteractable interactable)
+    {
+        Debug.Log("Bad Ending...");
     }
 }

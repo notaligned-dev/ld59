@@ -23,7 +23,7 @@ public class GameLifetimeScope : LifetimeScope
         builder.RegisterInstance(_playerConfiguration).As<IPlayerConfigurable>();
         builder.RegisterInstance(_camera).AsSelf();
         builder.RegisterInstance(_storyObjectsProvider).AsSelf();
-        builder.Register<StoryProgressIngameController>(Lifetime.Scoped).AsSelf().As<IInitializable, IDisposable>();
+        builder.RegisterComponentInHierarchy<StoryProgressIngameController>().AsSelf();
         builder.RegisterComponentInHierarchy<PlayerLook>();
         builder.RegisterComponentInHierarchy<PlayerController>();
         builder.RegisterComponentInHierarchy<DevilBookView>();
