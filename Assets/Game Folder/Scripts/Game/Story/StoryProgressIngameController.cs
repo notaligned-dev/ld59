@@ -41,9 +41,10 @@ public class StoryProgressIngameController : IInitializable, IDisposable
         if (_service.TryToChangePhase(nextPhase))
         {
             if (nextPhase == StoryPhase.DevilBookTaken)
+            {
                 _devilBookView.Initialize();
-
-
+                _devilBookView.ChangeSymbol(DevilSymbols.DirectionEye);
+            }
         }
     }
 }
