@@ -315,7 +315,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0777d029ed3dffa4692f417d4aba19ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.DecalProjector
-  m_Material: {fileID: 2100000, guid: 2f0ffff13af79524d95818d2191e77aa, type: 2}
+  m_Material: {fileID: 2100000, guid: 5b781724e6f78834bbdbe997bbec368e, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
   m_StartAngleFade: 180
@@ -785,7 +785,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0777d029ed3dffa4692f417d4aba19ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.DecalProjector
-  m_Material: {fileID: 2100000, guid: 2f0ffff13af79524d95818d2191e77aa, type: 2}
+  m_Material: {fileID: 2100000, guid: b50be068304fb6a4a818e273126b2c9a, type: 2}
   m_DrawDistance: 1000
   m_FadeScale: 0.9
   m_StartAngleFade: 180
@@ -2975,10 +2975,8 @@ MonoBehaviour:
   _animationDuration: 0.1
   _symbolBaseProjector: {fileID: 290170783}
   _symbolEditableProjector: {fileID: 135783996}
-  _emptyMaterial: {fileID: 2100000, guid: 2f0ffff13af79524d95818d2191e77aa, type: 2}
   _devilEyeBase: {fileID: 2100000, guid: b50be068304fb6a4a818e273126b2c9a, type: 2}
   _devilEyePupil: {fileID: 2100000, guid: 5b781724e6f78834bbdbe997bbec368e, type: 2}
-  _stopHandBase: {fileID: 2100000, guid: e25d68611fdc0994499fe063b097b5d7, type: 2}
 --- !u!1001 &3678233120120096158
 PrefabInstance:
   m_ObjectHideFlags: 0

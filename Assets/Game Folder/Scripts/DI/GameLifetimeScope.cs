@@ -27,5 +27,6 @@ public class GameLifetimeScope : LifetimeScope
         builder.RegisterComponentInHierarchy<PlayerLook>();
         builder.RegisterComponentInHierarchy<PlayerController>();
         builder.RegisterComponentInHierarchy<DevilBookView>();
+        builder.RegisterComponentInHierarchy<DevilSymbolView>();
     }
 }

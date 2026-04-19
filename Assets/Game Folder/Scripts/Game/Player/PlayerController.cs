@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private CharacterController _characterController;
     [SerializeField] private PlayerLook _look;
 
+    public bool IsWatchingBookFixed;
     private Camera _camera;
     private DevilBookView _bookView;
     private Vector3Int _inputMove;
@@ -127,7 +128,7 @@ public class PlayerController : MonoBehaviour
 
     private void ExecuteBookWatching()
     {
-        if (IsWatchingBook)
+        if (IsWatchingBook || IsWatchingBookFixed)
             _bookView.WatchBook();
         else
             _bookView.ReleaseBook();
