@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
+using VContainer;
 
 public class DevilSymbolView : MonoBehaviour
 {
@@ -18,8 +19,17 @@ public class DevilSymbolView : MonoBehaviour
     [SerializeField] private Material _devilEyePupil;
     [SerializeField] private Material _stopHandBase;
 
+    private Camera _playerCamera;
     private Coroutine _animation;
+    private Coroutine _eyeWatching;
     private DevilSymbols _currentSymbol;
+    private Vector3 _initialEditableProjectorPosition;
+
+    [Inject]
+    private void Construct(Camera playerCamera)
+    {
+        _playerCamera = playerCamera;
+    }
 
     private void OnValidate()
     {
@@ -35,6 +45,7 @@ public class DevilSymbolView : MonoBehaviour
 
     private void Awake()
     {
+        _initialEditableProjectorPosition = _symbolEditableProjector.transform.localPosition;
         _symbolBaseProjector.fadeFactor = 0f;
         _symbolEditableProjector.fadeFactor = 0f;
         SetSymbol(DevilSymbols.None);
@@ -64,7 +75,40 @@ public class DevilSymbolView : MonoBehaviour
 
     private void SetEyeTarget(Transform eyeDirectionToWatch = null)
     {
+        if (_eyeWatching != null)
+        {
+            StopCoroutine(TrackDestination(eyeDirectionToWatch));
+            _eyeWatching = null;
+        }
 
+        if (eyeDirectionToWatch != null)
+            _eyeWatching = StartCoroutine(TrackDestination(eyeDirectionToWatch));
+    }
+
+    private IEnumerator TrackDestination(Transform destination)
+    {
+        var await = new WaitForEndOfFrame();
+        var initialPosition = _initialEditableProjectorPosition;
+
+        while (destination != null)
+        {
+            Vector3 cameraDirection = _playerCamera.transform.forward;
+            cameraDirection.y = 0f;
+            Vector3 destinationDirection = destination.transform.position - transform.position;
+            destinationDirection.y = 0f;
+
+            var angle = Vector3.SignedAngle(cameraDirection, destinationDirection, Vector3.up);
+            var projectorPosition = initialPosition;
+            projectorPosition.y += Mathf.Cos(angle * Mathf.Deg2Rad) * 0.1f;
+            projectorPosition.x += Mathf.Sin(angle * Mathf.Deg2Rad) * 0.1f;
+            _symbolEditableProjector.transform.localPosition = projectorPosition;
+
+            yield return await;
+        }
+
+        _symbolEditableProjector.transform.localPosition = _initialEditableProjectorPosition;
+        _eyeWatching = null;
+        yield return null;
     }
 
     private IEnumerator ChangeShowingSymbol(DevilSymbols symbol, Action onHide = null, Action onShowed = null, Action onShowed2 = null)

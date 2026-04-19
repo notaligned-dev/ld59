@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
@@ -45,13 +46,13 @@ public class StoryProgressIngameController : IInitializable, IDisposable
     {
         if (_service.TryToChangePhase(nextPhase))
         {
-            UnityEngine.Debug.Log($"{nextPhase}");
-
             if (nextPhase == StoryPhase.DevilBookTaken)
             {
                 _devilBookView.Initialize();
                 _playerController.IsWatchingBookFixed = true;
-                _devilSymbolView.TryShowEye(onComplete: UnlockBookWatch);
+                GameObject myEmptyObj = new("hardcode goal 1");
+                myEmptyObj.transform.position = new Vector3(-4f, 2.55f, -2.1f);
+                _devilSymbolView.TryShowEye(myEmptyObj.transform, onComplete: SetEyeGoal1);
             }
             else if (nextPhase == StoryPhase.FirstDoorOpened)
             {
@@ -62,6 +63,11 @@ public class StoryProgressIngameController : IInitializable, IDisposable
     }
 
     private void UnlockBookWatch()
+    {
+        _playerController.IsWatchingBookFixed = false;
+    }
+
+    private void SetEyeGoal1()
     {
         _playerController.IsWatchingBookFixed = false;
     }
