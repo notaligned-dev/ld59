@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using VContainer;
 using VContainer.Unity;
 
@@ -15,7 +14,6 @@ public class StoryProgressIngameController : IInitializable, IDisposable
         _objectsProvider = objectsProvider;
         _service = storyService;
         _devilBookView = devilBookView;
-
     }
 
     public void Initialize()
@@ -28,41 +26,24 @@ public class StoryProgressIngameController : IInitializable, IDisposable
         UnsubscribeFromEvents();
     }
 
-    private void SubscribeToEvents()
+    private void SubscribeToEvents()    
     {
-        _objectsProvider.Interacted += HandleInteraction;
+        _objectsProvider.GroupFinished += HandleGroupFinished;
     }
 
     private void UnsubscribeFromEvents()
     {
-        _objectsProvider.Interacted -= HandleInteraction;
+        _objectsProvider.GroupFinished -= HandleGroupFinished;
     }
 
-    private void HandleInteraction(IStoryInteractable interactable)
+    private void HandleGroupFinished(StoryPhase nextPhase)
     {
-        if (interactable.UsedToProgress == false && _service.TryToChangePhase(interactable.PhaseToProgress))
+        if (_service.TryToChangePhase(nextPhase))
         {
-            interactable.UsedToProgress = true;
-            ProcessPhaseChange(interactable.PhaseToProgress);
+            if (nextPhase == StoryPhase.DevilBookTaken)
+                _devilBookView.Initialize();
+
+
         }
-    }
-
-    private void ProcessPhaseChange(StoryPhase phase)
-    {
-        switch (phase)
-        {
-            case StoryPhase.DevilBookTaken:
-                StartDevilBookTakenPhase();
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    private void StartDevilBookTakenPhase()
-    {
-        UnityEngine.Debug.Log("Handle Devil view!");
-        _devilBookView.Initialize();
     }
 }

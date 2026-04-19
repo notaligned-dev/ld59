@@ -103,7 +103,6 @@ public class PlayerController : MonoBehaviour
         interactable.TriggerLookAction();
     }
 
-
     private void HandleInteraction()
     {
         _look.CurrentInteractable?.TriggerInteraction();

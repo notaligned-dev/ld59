@@ -43,6 +43,7 @@ public class StoryProgress
 }
 
 public enum StoryPhase {
-    Beginning,
-    DevilBookTaken
+    Beginning = 0,
+    DevilBookTaken = 1,
+    FirstDoorOpened = 2,
 }

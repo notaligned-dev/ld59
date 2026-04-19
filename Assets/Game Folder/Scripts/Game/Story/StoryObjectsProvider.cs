@@ -4,35 +4,175 @@ using UnityEngine;
 
 public class StoryObjectsProvider : MonoBehaviour
 {
-    [SerializeField] private List<StoryProgressionObject> _storyProgressionObjects;
+    [SerializeField] private StoryObjectsFromPhase[] _storyGroups;
 
-    public event Action<IStoryInteractable> Interacted;
+    private byte _currentGroupIndex;
+
+    public event Action<StoryPhase> GroupFinished;
+
+    private void Awake()
+    {
+        _currentGroupIndex = 0;
+
+        for (int i = 0; i < _storyGroups.Length; i++)
+        {
+            _storyGroups[i].Initalize();
+
+            if (i == _currentGroupIndex)
+            {
+                _storyGroups[i].GroupDone += HandleGroupDone;
+                _storyGroups[i].IsLocked = false;
+            }
+        }
+    }
 
     private void OnValidate()
     {
-        UtilitiesDD.RequireNotNull(
-            (_storyProgressionObjects, nameof(_storyProgressionObjects))    
-        );
+        bool isValid = true;
 
-        if (_storyProgressionObjects.Count == 0)
-            throw new ArgumentOutOfRangeException(nameof(_storyProgressionObjects));
+        foreach (var group in _storyGroups)
+            isValid = isValid && group.Validate();
+
+        if (isValid == false)
+            throw new ArgumentOutOfRangeException(nameof(_storyGroups));
     }
 
-    private void OnEnable()
+    private void OnDestroy()
     {
-        foreach (var obj in _storyProgressionObjects)
-            obj.Interacted += HandleInteraction;
+        foreach (var group in _storyGroups)
+            group.Dispose();
     }
 
-    private void OnDisable()
+    private void HandleGroupDone(StoryPhase phaseToProgress)
     {
-        foreach (var obj in _storyProgressionObjects)
-            obj.Interacted -= HandleInteraction;
+        _storyGroups[_currentGroupIndex].GroupDone -= HandleGroupDone;
+        _storyGroups[_currentGroupIndex].IsLocked = true;
+        _currentGroupIndex++;
+
+        GroupFinished?.Invoke(phaseToProgress);
+
+        if (_currentGroupIndex < _storyGroups.Length)
+        {
+            _storyGroups[_currentGroupIndex].GroupDone += HandleGroupDone;
+            _storyGroups[_currentGroupIndex].IsLocked = false;
+        }
     }
 
-    private void HandleInteraction(IInteractable interactable)
+    [System.Serializable]
+    internal class StoryObjectsFromPhase : IDisposable
     {
-        if (interactable is IStoryInteractable storyInteractable)
-            Interacted?.Invoke(storyInteractable);
+        [SerializeField] private List<StoryProgressionObject> _objectsToLook;
+        [SerializeField] private List<StoryProgressionObject> _objectsToInteract;
+        [SerializeField] private StoryPhase PhaseToProgress;
+
+        [HideInInspector]
+        public bool IsLocked;
+        private Dictionary<IStoryInteractable, bool> _lookedStatus;
+        private Dictionary<IStoryInteractable, bool> _interactedStatus;
+
+        public event Action<StoryPhase> GroupDone;
+
+        public bool Validate()
+        {
+            if (_objectsToLook == null || _objectsToInteract == null)
+                return false;
+
+            if (PhaseToProgress == StoryPhase.Beginning)
+                return false;
+
+            return true;
+        }
+
+        public void Initalize()
+        {
+            IsLocked = true;
+            _lookedStatus = new Dictionary<IStoryInteractable, bool>();
+            _interactedStatus = new Dictionary<IStoryInteractable, bool>();
+
+            foreach (var obj in _objectsToInteract)
+            {
+                if (_interactedStatus.ContainsKey(obj) == false)
+                    _interactedStatus.Add(obj, false);
+
+                obj.Interacted += HandleInteraction;
+            }
+
+            foreach (var obj in _objectsToLook)
+            {
+                if (_lookedStatus.ContainsKey(obj) == false)
+                    _lookedStatus.Add(obj, false);
+
+                obj.Looked += HandleLooked;
+            }
+        }
+
+        public void Dispose()
+        {
+            foreach (var obj in _objectsToInteract)
+                obj.Interacted -= HandleInteraction;
+
+            foreach (var obj in _objectsToLook)
+                obj.Looked -= HandleLooked;
+
+            _lookedStatus.Clear();
+            _interactedStatus.Clear();
+        }
+
+        private void HandleLooked(IInteractable interactable)
+        {
+            if (IsLocked == false && interactable is IStoryInteractable storyObject)
+            {
+                if (_lookedStatus.ContainsKey(storyObject))
+                {
+                    storyObject.TriggerStoryLookAction();
+                    _lookedStatus[storyObject] = true;
+                }
+            }
+
+            IsEverythingDone();
+        }
+
+        private void HandleInteraction(IInteractable interactable)
+        {
+            if (IsLocked == false && interactable is IStoryInteractable storyObject)
+            {
+                if (_interactedStatus.ContainsKey(storyObject))
+                {
+                    storyObject.TriggerStoryInteraction();
+                    _interactedStatus[storyObject] = true;
+                }
+            }
+
+            IsEverythingDone();
+        }
+
+        private void IsEverythingDone()
+        {
+            if (IsLocked)
+                return;
+
+            bool isDone = true;
+
+            foreach (var (obj, status) in _lookedStatus)
+            {
+                if (status == false)
+                {
+                    isDone = false;
+                    break;
+                }
+            }
+
+            foreach (var (obj, status) in _interactedStatus)
+            {
+                if (status == false)
+                {
+                    isDone = false;
+                    break;
+                }
+            }
+
+            if (isDone)
+                GroupDone?.Invoke(PhaseToProgress);
+        }
     }
 }
