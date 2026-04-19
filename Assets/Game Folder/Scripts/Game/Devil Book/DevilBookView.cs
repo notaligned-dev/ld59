@@ -79,5 +79,6 @@ public enum DevilSymbols
 {
     None = 0,
     DirectionEye = 1,
-    StopHand = 2
+    StopHand = 2,
+    Ear = 3
 }

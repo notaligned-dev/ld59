@@ -1502,12 +1502,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DevilSymbolView
   _animationDuration: 0.1
   _animationSwitchDelay: 0.1
+  _maxHearingDistance: 30
   _symbolBaseProjector: {fileID: 530216356}
   _symbolEditableProjector: {fileID: 602127086}
   _emptyMaterial: {fileID: 2100000, guid: 2f0ffff13af79524d95818d2191e77aa, type: 2}
   _devilEyeBase: {fileID: 2100000, guid: b50be068304fb6a4a818e273126b2c9a, type: 2}
   _devilEyePupil: {fileID: 2100000, guid: 5b781724e6f78834bbdbe997bbec368e, type: 2}
   _stopHandBase: {fileID: 2100000, guid: e25d68611fdc0994499fe063b097b5d7, type: 2}
+  _earEditable: {fileID: 2100000, guid: 4682e483645624540bb5ee54ac8a4932, type: 2}
 --- !u!64 &1037807963
 MeshCollider:
   m_ObjectHideFlags: 0

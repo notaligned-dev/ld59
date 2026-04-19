@@ -52,22 +52,20 @@ public class StoryProgressIngameController : IInitializable, IDisposable
                 _playerController.IsWatchingBookFixed = true;
                 GameObject myEmptyObj = new("hardcode goal 1");
                 myEmptyObj.transform.position = new Vector3(-4f, 2.55f, -2.1f);
-                _devilSymbolView.TryShowEye(myEmptyObj.transform, onComplete: SetEyeGoal1);
+                _devilSymbolView.TryShowEye(myEmptyObj.transform, onComplete: UnfixBook);
             }
             else if (nextPhase == StoryPhase.FirstDoorOpened)
             {
                 _playerController.IsWatchingBookFixed = true;
-                _devilSymbolView.TryShowHand(onComplete: UnlockBookWatch);
+                GameObject myEmptyObj = new("hardcode goal 2");
+                myEmptyObj.transform.position = new Vector3(0.5f, 1.7f, 16.5f);
+                //_devilSymbolView.TryShowHand(onComplete: UnlockBookWatch);
+                _devilSymbolView.TryShowEar(myEmptyObj.transform, onComplete: UnfixBook);
             }
         }
     }
 
-    private void UnlockBookWatch()
-    {
-        _playerController.IsWatchingBookFixed = false;
-    }
-
-    private void SetEyeGoal1()
+    private void UnfixBook()
     {
         _playerController.IsWatchingBookFixed = false;
     }
