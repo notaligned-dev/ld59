@@ -13,10 +13,10 @@ public class FirstDoor : StoryProgressionObject
 
     public override void TriggerStoryLookAction()
     {
-        var newRotation = _doorPivot.localRotation;
+        var newRotation = _doorPivot.eulerAngles;
         newRotation.y = 90;
 
-        _doorPivot.localRotation = newRotation;
+        _doorPivot.eulerAngles = newRotation;
         base.TriggerStoryLookAction();
     }
 }

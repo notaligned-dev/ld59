@@ -134,6 +134,7 @@ public class StoryObjectsProvider : MonoBehaviour
 
         private void HandleInteraction(IInteractable interactable)
         {
+            Debug.Log($"Should trigger story interaction! {interactable is IStoryInteractable storyObject2 && _interactedStatus.ContainsKey(storyObject2)}");
             if (IsLocked == false && interactable is IStoryInteractable storyObject)
             {
                 if (_interactedStatus.ContainsKey(storyObject))

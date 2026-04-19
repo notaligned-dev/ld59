@@ -30,6 +30,16 @@ public class StoryProgress
                     phaseSuccessfullyChanged = false;
                 break;
 
+            case StoryPhase.FirstDoorOpened:
+                if (CurrentPhase != StoryPhase.DevilBookTaken)
+                    phaseSuccessfullyChanged = false;
+                break;
+
+            case StoryPhase.SecretBookshelfOpened:
+                if (CurrentPhase != StoryPhase.FirstDoorOpened)
+                    phaseSuccessfullyChanged = false;
+                break;
+
             default:
                 phaseSuccessfullyChanged = false;
                 break;
@@ -46,4 +56,5 @@ public enum StoryPhase {
     Beginning = 0,
     DevilBookTaken = 1,
     FirstDoorOpened = 2,
+    SecretBookshelfOpened = 3
 }
